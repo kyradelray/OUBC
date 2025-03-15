@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OUBC Empire</title>
+  <style>
+    /* Container for all the bricks */
+    .brick-container {
+      display: flex;
+      flex-direction: column; /* Stack layers vertically */
+      justify-content: flex-start; /* Align all bricks at the top */
+      align-items: center; /* Center all the layers */
+      height: 100vh; /* Full viewport height */
+      margin: 0; /* Remove margin to avoid any space */
+      padding: 0; /* Remove padding to avoid any space */
+    }
+
+    /* Styling for each brick (sentence) */
+    .brick {
+      background-color: navy;
+      color: white;
+      padding: 20px;
+      margin: 10px;
+      border-radius: 8px;
+      width: 180px; /* Width of each brick */
+      text-align: center;
+      font-size: 1.2em;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+      box-sizing: border-box;
+    }
+
+    /* Ensuring the text area and buttons are centered */
+    .controls {
+      text-align: center;
+      margin-bottom: 0; /* Remove bottom margin */
+    }
+
+    textarea {
+      margin-bottom: 0; /* Remove bottom margin */
+    }
+
+    /* Offset each layer horizontally */
+    .brick-layer {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+      transform: translateX(var(--offset, 0)); /* Apply dynamic offset */
+    }
+
+    /* Styling for the image at the top */
+    .top-image-container {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .top-image-container img {
+      width: 100px; /* Size of the image */
+      height: auto; /* Maintain aspect ratio */
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Image at the top of the screen -->
+  <div class="top-image-container">
+    <img src="oubclogo.jpg" alt="OUBC Logo">
+  </div>
+
+  <!-- Title -->
+  <h1 style="text-align:center;">OUBC Empire</h1>
+
+  <!-- Input form for entering sentences -->
+  <div class="controls">
+    <textarea id="inputText" rows="5" cols="50" placeholder="Enter sentences here, separated by commas"></textarea><br>
+    <button onclick="createBricks()">Add Bricks</button>
+  </div>
+
+  <!-- CSV file upload -->
+  <div class="controls">
+    <input type="file" id="csvFile" accept=".csv" />
+    <button onclick="handleCSV()">Upload CSV</button>
+  </div>
+
+  <!-- Container for the bricks -->
+  <div id="brickContainer" class="brick-container"></div>
+
+  <!-- Include PapaParse from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+  <script>
+    // Function to generate bricks from input text
+    function createBricks() {
+      const inputText = document.getElementById("inputText").value;
+      const sentences = inputText.split(',');
+
+      const brickContainer = document.getElementById("brickContainer");
+
+      // We'll group bricks into layers
+      let layers = [];
+      let currentLayer = [];
+      sentences.forEach((sentence, index) => {
+        sentence = sentence.trim();
+        if (sentence) {
+          currentLayer.push(sentence);
+
+          // If the current layer is full (arbitrary number of bricks per layer)
+          if (currentLayer.length === 5) {
+            layers.push(currentLayer);
+            currentLayer = [];
+          }
+        }
+      });
+
+      // If there are remaining bricks, add them as a new layer
+      if (currentLayer.length > 0) {
+        layers.push(currentLayer);
+      }
+
+      // Now, create the brick layers
+      layers.forEach((layer, index) => {
+        const brickLayer = document.createElement('div');
+        brickLayer.classList.add('brick-layer');
+        // Set an offset for the layer using a CSS variable
+        brickLayer.style.setProperty('--offset', `${(index % 2 === 0 ? 30 : -30)}px`);
+
+        layer.forEach(sentence => {
+          const brick = document.createElement('div');
+          brick.classList.add('brick');
+          brick.innerText = sentence;
+
+          // Append each brick to the layer
+          brickLayer.appendChild(brick);
+        });
+
+        // Append the layer to the brick container
+        brickContainer.appendChild(brickLayer);
+      });
+
+      // Clear the input box after adding the bricks
+      document.getElementById("inputText").value = '';
+    }
+
+    // Function to handle the CSV file input
+    function handleCSV() {
+      const fileInput = document.getElementById('csvFile');
+      const file = fileInput.files[0];
+
+      if (file) {
+        // Use PapaParse to read the CSV file
+        Papa.parse(file, {
+          complete: function(results) {
+            const csvData = results.data;
+            const brickContainer = document.getElementById("brickContainer");
+
+            // Group the CSV cells into layers
+            let layers = [];
+            let currentLayer = [];
+
+            csvData.forEach(row => {
+              row.forEach(cell => {
+                const sentence = cell.trim();
+                if (sentence) {
+                  currentLayer.push(sentence);
+                  // If layer has 5 bricks, push to layers array and start new layer
+                  if (currentLayer.length === 5) {
+                    layers.push(currentLayer);
+                    currentLayer = [];
+                  }
+                }
+              });
+            });
+
+            // If there are remaining bricks in currentLayer, push it
+            if (currentLayer.length > 0) {
+              layers.push(currentLayer);
+            }
+
+            // Now, create the brick layers
+            layers.forEach((layer, index) => {
+              const brickLayer = document.createElement('div');
+              brickLayer.classList.add('brick-layer');
+              // Set an offset for the layer using a CSS variable
+              brickLayer.style.setProperty('--offset', `${(index % 2 === 0 ? 30 : -30)}px`);
+
+              layer.forEach(sentence => {
+                const brick = document.createElement('div');
+                brick.classList.add('brick');
+                brick.innerText = sentence;
+
+                // Append each brick to the layer
+                brickLayer.appendChild(brick);
+              });
+
+              // Append the layer to the brick container
+              brickContainer.appendChild(brickLayer);
+            });
+          },
+          header: false, // Assuming the CSV doesn't have headers
+          skipEmptyLines: true
+        });
+      }
+    }
+  </script>
+
+</body>
+</html>
